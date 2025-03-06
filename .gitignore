@@ -172,3 +172,9 @@ cython_debug/
 
 # node_modules
 node_modules/
+
+# Ignore everything inside the data folder
+data/*
+
+# But keep the Python script
+!data/*.py
