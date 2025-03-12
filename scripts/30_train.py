@@ -28,7 +28,7 @@ from recur_scan.transactions import group_transactions, read_labeled_transaction
 n_cv_folds = 3  # number of cross-validation folds, could be 5
 n_hpo_iters = 20  # number of hyperparameter optimization iterations
 
-in_path = "../data/data-fix/updated/updated_transactions.csv"
+in_path = "./data/data-fix/updated/full-training-data.csv"
 out_dir = "../data/output"
 
 # %%
