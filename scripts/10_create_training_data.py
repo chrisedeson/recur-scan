@@ -150,16 +150,15 @@ print(total_transactions, total_transactions / n_accounts, total_transactions / 
 # and the total number of transactions for the accounts assigned to a labeler should be between
 # min_transactions_per_labeler and max_transactions_per_labeler
 
-constraints_satisfied = False
-while not constraints_satisfied:
-    # Initialize dictionaries and sets
+# Here is the key fix:
+# We no longer redefine `labeler_to_user_ids` in each loop, but populate it instead.
+while True:
+    # Initialize dictionaries
     user_id_to_labelers: dict[str, list[int]] = {user_id: [] for user_id in selected_user_ids}
     labeler_to_user_ids: dict[int, list[str]] = {i: [] for i in range(n_labelers)}
 
-    # For each labeler
+    # For each labeler, randomly assign user_ids
     for labeler in range(n_labelers):
-        # randomly select n_accounts_per_labeler user_ids from the selectable set
-        # but prefer to select user_ids that have been assigned to the least number of labelers
         candidate_user_ids: list[str] = []
         for repetition in range(n_repetitions):
             available_user_ids = [uid for uid in selected_user_ids if len(user_id_to_labelers[uid]) == repetition]
@@ -167,14 +166,12 @@ while not constraints_satisfied:
             candidate_user_ids.extend(random.sample(available_user_ids, select_count))
             if len(candidate_user_ids) == n_accounts_per_labeler:
                 break
-        # add the total number of transactions for the accounts assigned to this labeler
-        total_transactions = sum(user_id_to_n_transactions[uid] for uid in candidate_user_ids)
         # add the user_ids to the labeler's list
         labeler_to_user_ids[labeler] = candidate_user_ids
-        # add the labeler to the user_ids's list
         for uid in candidate_user_ids:
             user_id_to_labelers[uid].append(labeler)
-    # check if the total number of transactions is between min_transactions and max_transactions
+
+    # Check if the constraints are satisfied
     constraints_satisfied = True
     for labeler in range(n_labelers):
         total_transactions = sum(user_id_to_n_transactions[uid] for uid in labeler_to_user_ids[labeler])
@@ -182,26 +179,19 @@ while not constraints_satisfied:
             constraints_satisfied = False
             print(f"labeler {labeler} has {total_transactions} transactions")
             break
-    # check if each user_id is assigned to n_repetitions labelers
     for user_id in selected_user_ids:
         if len(user_id_to_labelers[user_id]) != n_repetitions:
             constraints_satisfied = False
             print(f"user_id {user_id} is assigned to {len(user_id_to_labelers[user_id])} labelers")
             break
-    # check if each labeler has n_accounts_per_labeler user_ids
     for labeler in range(n_labelers):
         if len(labeler_to_user_ids[labeler]) != n_accounts_per_labeler:
             constraints_satisfied = False
             print(f"labeler {labeler} has {len(labeler_to_user_ids[labeler])} user_ids")
             break
+    if constraints_satisfied:
+        break
 print("constraints satisfied")
-
-
-# %%
-# print the number of transactions for each labeler
-
-for labeler in range(n_labelers):
-    print(f"{labeler} has {sum(user_id_to_n_transactions[uid] for uid in labeler_to_user_ids[labeler])} transactions")
 
 # %%
 # create files for each labeler containing the transactions for the accounts assigned to the labeler
