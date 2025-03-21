@@ -130,9 +130,51 @@ def is_known_recurring_company(transaction_name: str) -> bool:
     Flags transactions as recurring if the company name contains specific keywords,
     regardless of price variation.
     """
-    known_recurring_keywords = ["insurance", "mobile", "canva", "at&t", "spotify", "netflix", "hulu", "sezzle"]
+    known_recurring_keywords = [
+        "insurance",
+        "mobile",
+        "canva",
+        "at&t",
+        "spotify",
+        "netflix",
+        "hulu",
+        "sezzle",
+        "wireless",
+        "cricket wireless",
+        "walmart+",
+        "disney",
+        "comcast",
+        "cox",
+        "spectrum",
+        "afterpay",
+        "smyrna finance",
+        "wix",
+        "ancestry",
+    ]
     transaction_name_lower = transaction_name.lower()
     return any(keyword in transaction_name_lower for keyword in known_recurring_keywords)
+
+
+def is_known_fixed_subscription(transaction: Transaction) -> bool:
+    """
+    Flags transactions as recurring if the company name contains specific keywords
+    and the amount matches a known subscription fee.
+    """
+    known_subscriptions = {
+        "dave": [1.00],
+        "cleo": [5.99, 6.99],  # Consolidated Cleo variations
+        "cleo ai": [5.99, 6.99],  # Cleo AI also has the same pricing
+        "brigit": [8.99],
+        "albert": [14.99],
+        "empower": [8.00],
+        "ava finance": [9.00],
+    }
+
+    transaction_name_lower = transaction.name.lower()
+    return any(
+        company in transaction_name_lower and any(abs(transaction.amount - amt) < 0.01 for amt in sub_amounts)
+        for company, sub_amounts in known_subscriptions.items()
+    )
 
 
 def get_features(transaction: Transaction, all_transactions: list[Transaction]) -> dict[str, float | int | bool]:
@@ -154,4 +196,5 @@ def get_features(transaction: Transaction, all_transactions: list[Transaction]) 
         "coefficient_of_variation": get_coefficient_of_variation(relevant_transactions),
         "median_interval": get_median_interval(relevant_transactions),
         "is_known_recurring_company": is_known_recurring_company(transaction.name),
+        "is_known_fixed_subscription": is_known_fixed_subscription(transaction),  # ✅ New Feature
     }
