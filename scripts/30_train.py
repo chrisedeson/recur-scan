@@ -32,7 +32,7 @@ do_hyperparameter_optimization = False  # set to False to use the default hyperp
 n_hpo_iters = 20  # number of hyperparameter optimization iterations
 n_jobs = -1  # number of jobs to run in parallel (set to 1 if your laptop gets too hot)
 
-in_path = "./data/data-fix/updated/updated_transactions.csv"
+in_path = "./data/data-fix/updated/full-training-data.csv"
 out_dir = "./data/output"
 
 # %%
