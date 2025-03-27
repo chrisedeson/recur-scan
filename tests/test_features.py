@@ -1,7 +1,10 @@
 # test features
+from datetime import date
+
 import pytest
 
 from recur_scan.features import (
+    _parse_date,
     detect_skipped_months,
     follows_regular_interval,
     get_coefficient_of_variation,
@@ -14,7 +17,6 @@ from recur_scan.features import (
     get_median_interval,
     get_n_transactions_days_apart,
     get_n_transactions_same_amount,
-    # Christopher's functions
     get_n_transactions_same_amount_chris,
     get_n_transactions_same_day,
     get_n_transactions_same_name,
@@ -27,6 +29,8 @@ from recur_scan.features import (
     get_transaction_std_amount,
     is_known_fixed_subscription,
     is_known_recurring_company,
+    # Christopher's functions
+    std_amount_all,
 )
 from recur_scan.transactions import Transaction
 
@@ -153,9 +157,44 @@ def test_get_is_always_recurring() -> None:
     )
 
 
-##############################################################################
-# Additional tests for Christopher's Features
-##############################################################################
+def test_parse_date():
+    """Test _parse_date function with valid and invalid inputs."""
+
+    # Valid date input
+    date_str = "2024-03-27"
+    parsed_date = _parse_date(date_str)
+    assert parsed_date == date(2024, 3, 27)  # Assert parsed date matches the expected date
+
+    with pytest.raises(ValueError, match="time data '03/27/2024' does not match format '%Y-%m-%d'"):
+        _parse_date("03/27/2024")  # Invalid format, should raise ValueError
+
+
+def test_std_amount_all():
+    """Test std_amount_all function with valid and invalid inputs."""
+
+    # Test with a valid list of transactions
+    transactions = [
+        Transaction(id=1, user_id="user1", name="Store A", amount=50, date="2024-01-01"),
+        Transaction(id=2, user_id="user1", name="Store A", amount=70, date="2024-01-02"),
+        Transaction(id=3, user_id="user1", name="Store A", amount=90, date="2024-01-03"),
+    ]
+    std_amount = std_amount_all(transactions)
+    assert std_amount > 0  # The standard deviation should be greater than 0
+
+    # Test with an empty list, should return 0.0
+    assert std_amount_all([]) == 0.0
+
+    # Test with a single transaction, should return 0.0
+    single_transaction = [Transaction(id=1, user_id="user1", name="Store A", amount=50, date="2024-01-01")]
+    assert std_amount_all(single_transaction) == 0.0
+
+    # Test with all transactions having the same amount (standard deviation should be 0)
+    same_amount_transactions = [
+        Transaction(id=1, user_id="user1", name="Store A", amount=50, date="2024-01-01"),
+        Transaction(id=2, user_id="user1", name="Store A", amount=50, date="2024-01-02"),
+        Transaction(id=3, user_id="user1", name="Store A", amount=50, date="2024-01-03"),
+    ]
+    assert std_amount_all(same_amount_transactions) == 0.0
 
 
 def test_get_n_transactions_same_amount_chris() -> None:
