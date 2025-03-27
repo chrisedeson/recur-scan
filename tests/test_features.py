@@ -18,7 +18,6 @@ from recur_scan.features import (
     get_n_transactions_same_amount_chris,
     get_n_transactions_same_day,
     get_n_transactions_same_name,
-    get_pct_transactions_days_apart,
     get_pct_transactions_same_day,
     get_percent_transactions_same_amount,
     get_percent_transactions_same_amount_chris,
@@ -108,21 +107,6 @@ def test_get_n_transactions_days_apart() -> None:
     assert get_n_transactions_days_apart(transactions[0], transactions, 14, 1) == 4
 
 
-def test_get_pct_transactions_days_apart() -> None:
-    """Test get_pct_transactions_days_apart."""
-    transactions = [
-        Transaction(id=1, user_id="user1", name="name1", amount=2.99, date="2024-01-01"),
-        Transaction(id=2, user_id="user1", name="name1", amount=2.99, date="2024-01-02"),
-        Transaction(id=3, user_id="user1", name="name1", amount=2.99, date="2024-01-14"),
-        Transaction(id=4, user_id="user1", name="name1", amount=2.99, date="2024-01-15"),
-        Transaction(id=4, user_id="user1", name="name1", amount=2.99, date="2024-01-16"),
-        Transaction(id=4, user_id="user1", name="name1", amount=2.99, date="2024-01-29"),
-        Transaction(id=4, user_id="user1", name="name1", amount=2.99, date="2024-01-31"),
-    ]
-    assert get_pct_transactions_days_apart(transactions[0], transactions, 14, 0) == 2 / 7
-    assert get_pct_transactions_days_apart(transactions[0], transactions, 14, 1) == 4 / 7
-
-
 def test_get_is_insurance() -> None:
     """Test get_is_insurance."""
     assert get_is_insurance(
@@ -197,106 +181,129 @@ def test_get_n_transactions_same_name() -> None:
 
 
 def test_get_transaction_gaps() -> None:
-    """Test get_transaction_gaps returns correct gaps between consecutive transactions."""
+    """Test get_transaction_gaps with valid and invalid inputs."""
     transactions = [
         Transaction(id=1, user_id="user1", name="Store A", amount=50, date="2024-01-01"),
-        Transaction(id=2, user_id="user1", name="Store A", amount=75, date="2024-01-03"),
-        Transaction(id=3, user_id="user1", name="Store A", amount=50, date="2024-01-06"),
+        Transaction(id=2, user_id="user1", name="Store A", amount=50, date="2024-01-10"),
+        Transaction(id=3, user_id="user1", name="Store A", amount=50, date="2024-01-20"),
     ]
-    gaps = get_transaction_gaps(transactions)
-    assert gaps == [2, 3]
+    assert get_transaction_gaps(transactions) == [9, 10]
+    assert get_transaction_gaps([]) == []
 
 
 def test_get_transaction_frequency() -> None:
-    """Test get_transaction_frequency returns the average gap."""
+    """Test get_transaction_frequency with valid and invalid inputs."""
     transactions = [
         Transaction(id=1, user_id="user1", name="Store A", amount=50, date="2024-01-01"),
-        Transaction(id=2, user_id="user1", name="Store A", amount=75, date="2024-01-04"),
-        Transaction(id=3, user_id="user1", name="Store A", amount=50, date="2024-01-06"),
+        Transaction(id=2, user_id="user1", name="Store A", amount=50, date="2024-01-10"),
+        Transaction(id=3, user_id="user1", name="Store A", amount=50, date="2024-01-20"),
     ]
-    # Gaps: 3 and 2 => average = 2.5
-    assert pytest.approx(get_transaction_frequency(transactions)) == 2.5
+    assert pytest.approx(get_transaction_frequency(transactions)) == 9.5
+    assert get_transaction_frequency([]) == 0.0
 
 
 def test_get_transaction_std_amount() -> None:
-    """Test get_transaction_std_amount returns the correct standard deviation."""
+    """Test get_transaction_std_amount with valid and invalid inputs."""
+    # Sample transactions for valid input
     transactions = [
         Transaction(id=1, user_id="user1", name="Store A", amount=50, date="2024-01-01"),
         Transaction(id=2, user_id="user1", name="Store A", amount=70, date="2024-01-02"),
         Transaction(id=3, user_id="user1", name="Store A", amount=90, date="2024-01-03"),
     ]
-    # Standard deviation for [50, 70, 90]
-    std = get_transaction_std_amount(transactions)
-    assert std > 0
+
+    # Test with valid transactions, should return standard deviation > 0
+    std_amount = get_transaction_std_amount(transactions)
+    assert std_amount > 0
+
+    # Test with an empty list, should return 0.0
+    assert get_transaction_std_amount([]) == 0.0
+
+    # Test with all same amounts (no variation), should return 0.0
+    transactions_same = [
+        Transaction(id=1, user_id="user1", name="Store A", amount=50, date="2024-01-01"),
+        Transaction(id=2, user_id="user1", name="Store A", amount=50, date="2024-01-02"),
+        Transaction(id=3, user_id="user1", name="Store A", amount=50, date="2024-01-03"),
+    ]
+    assert get_transaction_std_amount(transactions_same) == 0.0
 
 
 def test_get_coefficient_of_variation() -> None:
-    """Test get_coefficient_of_variation returns a positive value when amounts vary."""
+    """Test get_coefficient_of_variation with valid and invalid inputs."""
     transactions = [
         Transaction(id=1, user_id="user1", name="Store A", amount=50, date="2024-01-01"),
         Transaction(id=2, user_id="user1", name="Store A", amount=70, date="2024-01-02"),
         Transaction(id=3, user_id="user1", name="Store A", amount=90, date="2024-01-03"),
     ]
-    cov = get_coefficient_of_variation(transactions)
-    assert cov > 0
+
+    # Test with valid transactions, should return coefficient of variation > 0
+    cv = get_coefficient_of_variation(transactions)
+    assert cv > 0
+
+    # Test with an empty list, should return 0.0
+    assert get_coefficient_of_variation([]) == 0.0
+
+    # Test with all same amounts (no variation), should return 0.0 for coefficient of variation
+    transactions_same = [
+        Transaction(id=1, user_id="user1", name="Store A", amount=50, date="2024-01-01"),
+        Transaction(id=2, user_id="user1", name="Store A", amount=50, date="2024-01-02"),
+        Transaction(id=3, user_id="user1", name="Store A", amount=50, date="2024-01-03"),
+    ]
+    assert get_coefficient_of_variation(transactions_same) == 0.0
 
 
 def test_follows_regular_interval() -> None:
-    """Test follows_regular_interval for a monthly recurring pattern."""
+    """Test follows_regular_interval with valid and invalid inputs."""
     transactions = [
         Transaction(id=1, user_id="user1", name="Store A", amount=50, date="2024-01-01"),
         Transaction(id=2, user_id="user1", name="Store A", amount=50, date="2024-02-01"),
         Transaction(id=3, user_id="user1", name="Store A", amount=50, date="2024-03-01"),
     ]
     assert follows_regular_interval(transactions)
+    assert not follows_regular_interval([])
 
 
 def test_detect_skipped_months() -> None:
-    """Test detect_skipped_months returns the number of missing months."""
-    # Transactions for Jan, Mar, Apr (Feb skipped)
+    """Test detect_skipped_months with valid and invalid inputs."""
     transactions = [
         Transaction(id=1, user_id="user1", name="Store A", amount=50, date="2024-01-01"),
         Transaction(id=2, user_id="user1", name="Store A", amount=50, date="2024-03-01"),
         Transaction(id=3, user_id="user1", name="Store A", amount=50, date="2024-04-01"),
     ]
     assert detect_skipped_months(transactions) == 1
+    assert detect_skipped_months([]) == 0
 
 
 def test_get_day_of_month_consistency() -> None:
-    """Test get_day_of_month_consistency returns a value between 0 and 1."""
-    # All transactions on the 15th
+    """Test get_day_of_month_consistency with valid and invalid inputs."""
     transactions = [
         Transaction(id=1, user_id="user1", name="Store A", amount=50, date="2024-01-15"),
         Transaction(id=2, user_id="user1", name="Store A", amount=60, date="2024-02-15"),
         Transaction(id=3, user_id="user1", name="Store A", amount=70, date="2024-03-15"),
     ]
-    consistency = get_day_of_month_consistency(transactions)
-    assert 0 <= consistency <= 1
-    assert consistency == 1.0
+    assert get_day_of_month_consistency(transactions) == 1.0
+    assert get_day_of_month_consistency([]) == 0.0
 
 
 def test_get_median_interval() -> None:
-    """Test get_median_interval returns the correct median gap."""
+    """Test get_median_interval with valid and invalid inputs."""
     transactions = [
         Transaction(id=1, user_id="user1", name="Store A", amount=50, date="2024-01-01"),
         Transaction(id=2, user_id="user1", name="Store A", amount=50, date="2024-01-04"),
         Transaction(id=3, user_id="user1", name="Store A", amount=50, date="2024-01-10"),
     ]
-    # Gaps: 3 and 6, median is 4.5
-    median_interval = get_median_interval(transactions)
-    assert pytest.approx(median_interval, 0.1) == 4.5
+    assert pytest.approx(get_median_interval(transactions), 0.1) == 4.5
+    assert get_median_interval([]) == 0.0
 
 
 def test_is_known_recurring_company() -> None:
-    """Test is_known_recurring_company returns True for known recurring companies."""
+    """Test is_known_recurring_company with valid and invalid inputs."""
     assert is_known_recurring_company("Netflix")
     assert is_known_recurring_company("Hulu")
     assert not is_known_recurring_company("Local Grocery")
 
 
 def test_is_known_fixed_subscription() -> None:
-    """Test is_known_fixed_subscription returns True for known fixed subscriptions."""
-    # Assuming the amount matches one of the known subscription fees
+    """Test is_known_fixed_subscription with valid and invalid inputs."""
     assert is_known_fixed_subscription(Transaction(id=1, user_id="user1", name="Cleo", amount=5.99, date="2024-01-01"))
     assert not is_known_fixed_subscription(
         Transaction(id=2, user_id="user1", name="Local Gym", amount=30, date="2024-01-01")
