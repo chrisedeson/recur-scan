@@ -29,7 +29,7 @@ from recur_scan.features import (
     get_transaction_std_amount,
     is_known_fixed_subscription,
     is_known_recurring_company,
-    # Christopher's functions
+    parse_date,
     std_amount_all,
 )
 from recur_scan.transactions import Transaction
@@ -167,6 +167,12 @@ def test_parse_date():
 
     with pytest.raises(ValueError, match="time data '03/27/2024' does not match format '%Y-%m-%d'"):
         _parse_date("03/27/2024")  # Invalid format, should raise ValueError
+
+
+def test_parse_date_invalid_format() -> None:
+    """Test that parse_date raises ValueError for invalid date format."""
+    with pytest.raises(ValueError, match="time data '03/27/2024' does not match format '%Y-%m-%d'"):
+        parse_date("03/27/2024")  # Invalid format, should raise ValueError
 
 
 def test_std_amount_all():
