@@ -39,17 +39,13 @@ def get_transaction_gaps(all_transactions: list[Transaction]) -> list[int]:
 
 
 def get_transaction_frequency(all_transactions: list[Transaction]) -> float:
-    """
-    Calculate the average number of days between transactions.
-    """
+    """Calculate the average number of days between transactions."""
     gaps = get_transaction_gaps(all_transactions)
     return sum(gaps) / len(gaps) if gaps else 0.0
 
 
 def get_transaction_std_amount(all_transactions: list[Transaction]) -> float:
-    """
-    Compute the standard deviation of transaction amounts.
-    """
+    """Compute the standard deviation of transaction amounts."""
     amounts = [t.amount for t in all_transactions]
     try:
         return stdev(amounts) if len(amounts) > 1 else 0.0
@@ -131,26 +127,41 @@ def is_known_recurring_company(transaction_name: str) -> bool:
     regardless of price variation.
     """
     known_recurring_keywords = [
-        "insurance",
-        "mobile",
-        "canva",
+        "Amazon Prime",
+        "American Water Works",
+        "ancestry",
         "at&t",
-        "spotify",
-        "netflix",
-        "hulu",
-        "sezzle",
-        "wireless",
-        "cricket wireless",
-        "walmart+",
-        "disney",
+        "canva",
         "comcast",
         "cox",
-        "spectrum",
-        "afterpay",
+        "cricket wireless",
+        "disney",
+        "disney+",
+        "energy",
+        "geico",
+        "google storage",
+        "hulu",
+        "HBO Max",
+        "insurance",
+        "mobile",
+        "national grid",
+        "netflix",
+        "ngrid",
+        "peacock",
+        "Placer County Water Age",
+        "spotify",
+        "sezzle",
         "smyrna finance",
+        "spectrum",
+        "utility",
+        "utilities",
+        "verizon",
+        "walmart+",
+        "wireless",
         "wix",
-        "ancestry",
+        "youtube",
     ]
+
     transaction_name_lower = transaction_name.lower()
     return any(keyword in transaction_name_lower for keyword in known_recurring_keywords)
 
@@ -161,13 +172,15 @@ def is_known_fixed_subscription(transaction: Transaction) -> bool:
     and the amount matches a known subscription fee.
     """
     known_subscriptions = {
-        "dave": [1.00],
+        "albert": [14.99],
+        "ava finance": [9.0],
+        "brigit": [8.99],
         "cleo": [5.99, 6.99],  # Consolidated Cleo variations
         "cleo ai": [5.99, 6.99],  # Cleo AI also has the same pricing
-        "brigit": [8.99],
-        "albert": [14.99],
-        "empower": [8.00],
-        "ava finance": [9.00],
+        "credit genie": [3.99, 4.99],
+        "dave": [1.0],
+        "empower": [8.0],
+        "grid": [10.0],
     }
 
     transaction_name_lower = transaction.name.lower()
@@ -196,5 +209,5 @@ def get_features(transaction: Transaction, all_transactions: list[Transaction]) 
         "coefficient_of_variation": get_coefficient_of_variation(relevant_transactions),
         "median_interval": get_median_interval(relevant_transactions),
         "is_known_recurring_company": is_known_recurring_company(transaction.name),
-        "is_known_fixed_subscription": is_known_fixed_subscription(transaction),  # ✅ New Feature
+        "is_known_fixed_subscription": is_known_fixed_subscription(transaction),
     }
