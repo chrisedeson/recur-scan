@@ -352,7 +352,6 @@ from recur_scan.features_original import (
     get_n_transactions_same_day,
     get_pct_transactions_days_apart,
     get_pct_transactions_same_day,
-    get_percent_transactions_same_amount,
     get_transaction_z_score,
 )
 from recur_scan.features_osasere import (
@@ -556,9 +555,7 @@ def get_features(transaction: Transaction, all_transactions: list[Transaction]) 
 
     return {
         "n_transactions_same_amount": get_n_transactions_same_amount(transaction, all_transactions),
-        "percent_transactions_same_amount": get_percent_transactions_same_amount(transaction, all_transactions),
         "ends_in_99": get_ends_in_99(transaction),
-        "amount": transaction.amount,
         "same_day_exact": get_n_transactions_same_day(transaction, all_transactions, 0),
         "pct_transactions_same_day": get_pct_transactions_same_day(transaction, all_transactions, 0),
         "same_day_off_by_1": get_n_transactions_same_day(transaction, all_transactions, 1),
