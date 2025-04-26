@@ -49,17 +49,17 @@ from recur_scan.features_bassey import (
     get_is_subscription,
 )
 from recur_scan.features_christopher import (
-    detect_skipped_months,
-    follows_regular_interval,
-    get_coefficient_of_variation,
-    get_day_of_month_consistency,
-    get_median_interval,
+    detect_skipped_months_chris,
+    follows_regular_interval_chris,
+    get_coefficient_of_variation_chris,
+    get_day_of_month_consistency_chris,
+    get_median_interval_chris,
     get_n_transactions_same_amount_chris,
     get_percent_transactions_same_amount_chris,
-    get_transaction_frequency,
-    get_transaction_std_amount,
-    is_known_fixed_subscription,
-    is_known_recurring_company,
+    get_transaction_frequency_chris,
+    get_transaction_std_amount_chris,
+    is_known_fixed_subscription_chris,
+    is_known_recurring_company_chris,
 )
 from recur_scan.features_ebenezer import (
     get_avg_amount_same_day_of_week,
@@ -352,6 +352,7 @@ from recur_scan.features_original import (
     get_n_transactions_same_day,
     get_pct_transactions_days_apart,
     get_pct_transactions_same_day,
+    get_percent_transactions_same_amount,
     get_transaction_z_score,
 )
 from recur_scan.features_osasere import (
@@ -555,7 +556,9 @@ def get_features(transaction: Transaction, all_transactions: list[Transaction]) 
 
     return {
         "n_transactions_same_amount": get_n_transactions_same_amount(transaction, all_transactions),
+        "percent_transactions_same_amount": get_percent_transactions_same_amount(transaction, all_transactions),
         "ends_in_99": get_ends_in_99(transaction),
+        "amount": transaction.amount,
         "same_day_exact": get_n_transactions_same_day(transaction, all_transactions, 0),
         "pct_transactions_same_day": get_pct_transactions_same_day(transaction, all_transactions, 0),
         "same_day_off_by_1": get_n_transactions_same_day(transaction, all_transactions, 1),
@@ -611,20 +614,20 @@ def get_features(transaction: Transaction, all_transactions: list[Transaction]) 
         "is_utility_company": is_utility_company(transaction.name),
         "recurring_score": recurring_score(transaction.name),
         # Christopher's features
-        "n_transactions_same_name": len(all_transactions),
+        "n_transactions_same_name_chris": len(all_transactions),
         "n_transactions_same_amount_chris": get_n_transactions_same_amount_chris(transaction, all_transactions),
         "percent_transactions_same_amount_chris": get_percent_transactions_same_amount_chris(
             transaction, all_transactions
         ),
-        "transaction_frequency": get_transaction_frequency(all_transactions),
-        "transaction_std_amount": get_transaction_std_amount(all_transactions),
-        "follows_regular_interval": follows_regular_interval(all_transactions),
-        "skipped_months": detect_skipped_months(all_transactions),
-        "day_of_month_consistency": get_day_of_month_consistency(all_transactions),
-        "coefficient_of_variation": get_coefficient_of_variation(all_transactions),
-        "median_interval": get_median_interval(all_transactions),
-        "is_known_recurring_company": is_known_recurring_company(transaction.name),
-        "is_known_fixed_subscription": is_known_fixed_subscription(transaction),
+        "transaction_frequency_chris": get_transaction_frequency_chris(all_transactions),
+        "transaction_std_amount_chris": get_transaction_std_amount_chris(all_transactions),
+        "follows_regular_interval": follows_regular_interval_chris(all_transactions),
+        "skipped_months": detect_skipped_months_chris(all_transactions),
+        "day_of_month_consistency_chris": get_day_of_month_consistency_chris(all_transactions),
+        "coefficient_of_variation_chris": get_coefficient_of_variation_chris(all_transactions),
+        "median_interval_chris": get_median_interval_chris(all_transactions),
+        "is_known_recurring_company_chris": is_known_recurring_company_chris(transaction.name),
+        "is_known_fixed_subscription_chris": is_known_fixed_subscription_chris(transaction),
         # Laurels' features
         "identical_transaction_ratio": identical_transaction_ratio_feature(
             transaction, all_transactions, merchant_trans
