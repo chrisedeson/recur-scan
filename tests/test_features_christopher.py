@@ -23,10 +23,9 @@ from recur_scan.features_christopher import (
     std_amount_all_chris,
     transaction_frequency_chris,
     # New Feature Functions
-    user_vendor_history,
 )
-from recur_scan.features_original import parse_date
 from recur_scan.transactions import Transaction
+from recur_scan.utils import parse_date
 
 
 def test_parse_date_invalid_format() -> None:
@@ -245,22 +244,15 @@ def test_is_known_fixed_subscription_chris() -> None:
 # ------------------- NEW TEST FUNCTIONS -------------------
 
 
-def setup_function() -> None:
-    """Reset user_vendor_history before each test to avoid cross-test contamination."""
-    user_vendor_history.clear()  # FIXED: Clear the actual defaultdict
-
-
 def test_get_user_vendor_history() -> None:
     """Test get_user_vendor_history returns only past transactions."""
     transactions = [
         Transaction(id=1, user_id="user1", name="Vendor", amount=100, date="2024-01-01"),
         Transaction(id=2, user_id="user1", name="Vendor", amount=100, date="2024-02-01"),
     ]
-    # Add to the actual history storage
-    user_vendor_history["user1"]["Vendor"].extend(transactions)  # FIXED: Use the imported defaultdict
 
     transaction = Transaction(id=3, user_id="user1", name="Vendor", amount=100, date="2024-03-01")
-    history = get_user_vendor_history(transaction)
+    history = get_user_vendor_history(transaction, transactions)
     assert len(history) == 2
     assert all(t.date < transaction.date for t in history)
 
@@ -272,9 +264,8 @@ def test_is_regular_interval_chris() -> None:
         Transaction(id=2, user_id="user1", name="Vendor", amount=50, date="2024-02-01"),
         Transaction(id=3, user_id="user1", name="Vendor", amount=50, date="2024-03-01"),
     ]
-    user_vendor_history["user1"]["Vendor"].extend(transactions)  # FIXED
     transaction = Transaction(id=4, user_id="user1", name="Vendor", amount=50, date="2024-04-01")
-    assert is_regular_interval_chris(transaction) is True
+    assert is_regular_interval_chris(transaction, transactions) is True
 
 
 def test_amount_deviation_chris() -> None:
@@ -283,9 +274,8 @@ def test_amount_deviation_chris() -> None:
         Transaction(id=1, user_id="user1", name="Vendor", amount=100, date="2024-01-01"),
         Transaction(id=2, user_id="user1", name="Vendor", amount=100, date="2024-02-01"),
     ]
-    user_vendor_history["user1"]["Vendor"].extend(transactions)  # FIXED
     transaction = Transaction(id=3, user_id="user1", name="Vendor", amount=110, date="2024-03-01")
-    deviation = amount_deviation_chris(transaction)
+    deviation = amount_deviation_chris(transaction, transactions)
     assert pytest.approx(deviation, 0.01) == 0.1  # 10% deviation
 
 
@@ -295,9 +285,8 @@ def test_transaction_frequency_chris() -> None:
         Transaction(id=1, user_id="user1", name="Vendor", amount=30, date="2023-07-01"),  # older than 6 months
         Transaction(id=2, user_id="user1", name="Vendor", amount=30, date="2024-01-01"),  # within 6 months
     ]
-    user_vendor_history["user1"]["Vendor"].extend(transactions)  # FIXED
     transaction = Transaction(id=3, user_id="user1", name="Vendor", amount=30, date="2024-02-01")
-    assert transaction_frequency_chris(transaction) == 1
+    assert transaction_frequency_chris(transaction, transactions) == 1
 
 
 def test_day_of_month_consistency_chris() -> None:
@@ -307,9 +296,8 @@ def test_day_of_month_consistency_chris() -> None:
         Transaction(id=2, user_id="user1", name="Vendor", amount=60, date="2024-02-05"),
         Transaction(id=3, user_id="user1", name="Vendor", amount=60, date="2024-03-05"),
     ]
-    user_vendor_history["user1"]["Vendor"].extend(transactions)  # FIXED
     transaction = Transaction(id=4, user_id="user1", name="Vendor", amount=60, date="2024-04-05")
-    assert day_of_month_consistency_chris(transaction) is True
+    assert day_of_month_consistency_chris(transaction, transactions) is True
 
 
 def test_amount_consistency_chris() -> None:
@@ -319,6 +307,5 @@ def test_amount_consistency_chris() -> None:
         Transaction(id=2, user_id="user1", name="Vendor", amount=101, date="2024-02-01"),
         Transaction(id=3, user_id="user1", name="Vendor", amount=99, date="2024-03-01"),
     ]
-    user_vendor_history["user1"]["Vendor"].extend(transactions)  # FIXED
     transaction = Transaction(id=4, user_id="user1", name="Vendor", amount=100, date="2024-04-01")
-    assert amount_consistency_chris(transaction) is True
+    assert amount_consistency_chris(transaction, transactions) is True

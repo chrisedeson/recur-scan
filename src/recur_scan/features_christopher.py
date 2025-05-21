@@ -1,4 +1,3 @@
-from collections import defaultdict
 from datetime import datetime, timedelta
 from statistics import StatisticsError, mean, median, stdev
 
@@ -140,10 +139,10 @@ def is_known_recurring_company_chris(transaction_name: str) -> bool:
         "netflix",
         "ngrid",
         "peacock",
-        "placer county water age",
+        # "placer county water age",  # too specific
         "spotify",
         "sezzle",
-        "smyrna finance",
+        # "smyrna finance",  # too specific
         "spectrum",
         "utility",
         "utilities",
@@ -185,20 +184,16 @@ def is_known_fixed_subscription_chris(transaction: Transaction) -> bool:
 
 # ------------------------NEW FEATURES ------------------------
 
-# Precomputed data structures
-user_vendor_history: defaultdict[str, defaultdict[str, list[Transaction]]] = defaultdict(lambda: defaultdict(list))
 
-
-def get_user_vendor_history(transaction: Transaction) -> list[Transaction]:
+def get_user_vendor_history(transaction: Transaction, all_transactions: list[Transaction]) -> list[Transaction]:
     """Get historical transactions for same user-vendor pair."""
     current_date = datetime.strptime(transaction.date, "%Y-%m-%d")
-    history = user_vendor_history[transaction.user_id][transaction.name]
-    return [t for t in history if datetime.strptime(t.date, "%Y-%m-%d") < current_date]
+    return [t for t in all_transactions if datetime.strptime(t.date, "%Y-%m-%d") < current_date]
 
 
-def is_regular_interval_chris(transaction: Transaction) -> bool:
+def is_regular_interval_chris(transaction: Transaction, all_transactions: list[Transaction]) -> bool:
     """Check if transaction follows regular time intervals with same vendor."""
-    history = get_user_vendor_history(transaction)
+    history = get_user_vendor_history(transaction, all_transactions)
     if len(history) < 2:
         return False
 
@@ -208,9 +203,9 @@ def is_regular_interval_chris(transaction: Transaction) -> bool:
     return standard_deviation < 3  # Allow small variation in interval days
 
 
-def amount_deviation_chris(transaction: Transaction) -> float:
+def amount_deviation_chris(transaction: Transaction, all_transactions: list[Transaction]) -> float:
     """Measure relative difference from historical average amount."""
-    history = get_user_vendor_history(transaction)
+    history = get_user_vendor_history(transaction, all_transactions)
     if not history:
         return 0.0
 
@@ -218,15 +213,19 @@ def amount_deviation_chris(transaction: Transaction) -> float:
     return abs(transaction.amount - avg_amount) / avg_amount
 
 
-def transaction_frequency_chris(transaction: Transaction) -> int:
+def transaction_frequency_chris(transaction: Transaction, all_transactions: list[Transaction]) -> int:
     """Count transactions from same user-vendor pair in last 6 months."""
     cutoff = datetime.strptime(transaction.date, "%Y-%m-%d") - timedelta(days=180)
-    return sum(1 for t in get_user_vendor_history(transaction) if datetime.strptime(t.date, "%Y-%m-%d") > cutoff)
+    return sum(
+        1
+        for t in get_user_vendor_history(transaction, all_transactions)
+        if datetime.strptime(t.date, "%Y-%m-%d") > cutoff
+    )
 
 
-def day_of_month_consistency_chris(transaction: Transaction) -> bool:
+def day_of_month_consistency_chris(transaction: Transaction, all_transactions: list[Transaction]) -> bool:
     """Check if transaction consistently occurs on same calendar day."""
-    history = get_user_vendor_history(transaction)
+    history = get_user_vendor_history(transaction, all_transactions)
     if not history:
         return False
 
@@ -235,9 +234,9 @@ def day_of_month_consistency_chris(transaction: Transaction) -> bool:
     return same_day_count / len(history) > 0.8
 
 
-def amount_consistency_chris(transaction: Transaction) -> bool:
+def amount_consistency_chris(transaction: Transaction, all_transactions: list[Transaction]) -> bool:
     """Check if amounts have low historical variability."""
-    history = get_user_vendor_history(transaction)
+    history = get_user_vendor_history(transaction, all_transactions)
     if len(history) < 2:
         return False
 
@@ -246,19 +245,16 @@ def amount_consistency_chris(transaction: Transaction) -> bool:
     return standard_deviation < (mean(amounts) * 0.1)
 
 
-def get_new_features(transaction: Transaction) -> dict[str, int | bool | float]:
+def get_new_features(transaction: Transaction, all_transactions: list[Transaction]) -> dict[str, int | bool | float]:
     """Get the new features for the transaction."""
-
-    # Update historical data (assuming all_transactions is time-ordered)
-    user_vendor_history[transaction.user_id][transaction.name].append(transaction)
 
     # NOTE: Do NOT add features that are already in the original features.py file.
     # NOTE: Each feature should be on a separate line. Do not use **dict shorthand.
     return {
-        "is_known_fixed_subscription_chris": is_known_fixed_subscription_chris(transaction),
-        "is_regular_interval_chris": is_regular_interval_chris(transaction),
-        "amount_deviation_chris": amount_deviation_chris(transaction),
-        "transaction_frequency_chris": transaction_frequency_chris(transaction),
-        "day_of_month_consistency_chris": day_of_month_consistency_chris(transaction),
-        "amount_consistency_chris": amount_consistency_chris(transaction),
+        # "is_known_fixed_subscription_chris": is_known_fixed_subscription_chris(transaction),  # too specific
+        "is_regular_interval_chris": is_regular_interval_chris(transaction, all_transactions),
+        "amount_deviation_chris": amount_deviation_chris(transaction, all_transactions),
+        "transaction_frequency_chris": transaction_frequency_chris(transaction, all_transactions),
+        "day_of_month_consistency_chris": day_of_month_consistency_chris(transaction, all_transactions),
+        "amount_consistency_chris": amount_consistency_chris(transaction, all_transactions),
     }
